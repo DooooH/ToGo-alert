@@ -1,9 +1,14 @@
 from selenium import webdriver
 import time
 # from selenium.common.exceptions import UnexpectedAlertPresentException
+import platform
 import os
+# python-telegram-bot package
 import telegram
+# python-dotenv
 from dotenv import load_dotenv
+# Window notification
+from win10toast import ToastNotifier
 
 # 텔레그램 봇 토큰
 load_dotenv(verbose=True)
@@ -21,15 +26,18 @@ def notify(title, text):
 
 
 if __name__ == "__main__":
+    url = "https://www.galaxytogo.co.kr/reservation/step1/"
+
     # 텔레그램 봇 설정
     bot = telegram.Bot(token=my_token)
     updates = bot.getUpdates()
     chat_id = bot.getUpdates()[-1].message.chat.id
     # notify("Hello world", "test")
     # bot.sendMessage(chat_id=chat_id, text="test 봇입니다" + pre_stock + "\n" + url)
+    toaster = ToastNotifier()
+    toaster.show_toast("Fold 3 재고 입고", "재고 : ", icon_path=None, duration=5, threaded=True)
 
     # open Browser
-    url = "https://www.galaxytogo.co.kr/reservation/step1/"
     driver = webdriver.Chrome('./chromedriver')
     driver.get(url)
 
@@ -61,7 +69,12 @@ if __name__ == "__main__":
                                                      "li[2]/p/strong").text
             # print(stock_num[0])
             if stock_num[0] != '0' and pre_stock == '0':
-                notify("Fold 3 재고 입고", stock_num)
+                cur_os = platform.system()
+                if cur_os == "Darwin":
+                    notify("Fold 3 재고 입고", stock_num) # Mac only
+                elif cur_os == 'Windows':
+                    toaster = ToastNotifier()
+                    toaster.show_toast("Fold 3 재고 입고", "재고 : " + stock_num, icon_path=None, duration=5, threaded=True)
                 bot.sendMessage(chat_id=chat_id, text="Fold 3 재고 입고 재고 : " + stock_num + "\n" + url)
 
             pre_stock = stock_num[0]
